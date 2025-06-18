@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes
 
 from Api.sanaii_api import add_inbound, add_client_to_inbound
 from commands import CHOOSING, END
-from db.db_config import db
+from db_config import db
 from models.models import User, Subscription, Transaction, Inbound, Client
 
 

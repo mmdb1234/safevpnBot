@@ -8,7 +8,7 @@ from telegram.ext import (
 
 from handlers import main_conversation_handler, main_menu_handler
 from local_setting import TOKEN
-
+from db_config import *
 # Enable logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -25,6 +25,7 @@ async def post_init(application: Application) -> None:
 
 def main() -> None:
     """Run the bot."""
+    
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(TOKEN).post_init(post_init=post_init).build()
     application.add_handler(main_conversation_handler)

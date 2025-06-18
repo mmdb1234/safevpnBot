@@ -7,7 +7,6 @@ import datetime
 import jdatetime
 from button_creator import create_subscription_button, create_servers_button, \
     create_clients_button
-from db.db_migration import create_tables
 from handlers import CHOOSING, BUY_SERVER, MAKE_CONFIG, Go_FOR_PAYMENT, END, CHANGE_SERVER, CHOOSE_SERVER, \
     CHOOSE_SERVICE, EXTENSION_SERVER, EXTENSION_CLIENT
 from models.models import User, Server, Subscription, Client
