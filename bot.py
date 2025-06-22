@@ -11,7 +11,9 @@ from botManager import RobustTelegramBot
 async def post_init(application: Application) -> None:
     await application.bot.set_my_commands([('start', 'شروع کار ربات')])
 
+def main():
+    bot = RobustTelegramBot(TOKEN)
+    bot.start()
 
 if __name__ == "__main__":
-    botmanegaer = RobustTelegramBot(TOKEN)
-    asyncio.run(botmanegaer.start())
+    main()
