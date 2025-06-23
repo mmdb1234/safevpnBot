@@ -200,8 +200,9 @@ async def handle_vless_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ لینک نامعتبر است. لطفاً دوباره امتحان کنید.")
         return CHOOSING
 
-    try:
-        server = Server.select().where(Server.server_address == domain).first()
+    try: # 🔧 اطمینان از اتصال مجدد به دیتابیس
+        
+        server = Server.safe_select().where(Server.server_address == domain).first()
         if not server:
             await update.message.reply_text("❌ سروری با این دامنه یافت نشد.")
             return CHOOSING

@@ -22,6 +22,23 @@ class BaseModel(Model):
 
     class Meta:
         database = db
+    
+    @classmethod
+    def safe_select(cls, *args, **kwargs):
+        if db.is_closed():
+            db.connect(reuse_if_open=True)
+        return cls.select(*args, **kwargs)
+
+    @classmethod
+    def safe_get(cls, *args, **kwargs):
+        if db.is_closed():
+            db.connect(reuse_if_open=True)
+        return cls.get(*args, **kwargs)
+
+    def safe_save(self, *args, **kwargs):
+        if db.is_closed():
+            db.connect(reuse_if_open=True)
+        return self.save(*args, **kwargs)
 
 
 class ErrorLog(BaseModel):
