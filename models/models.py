@@ -14,7 +14,17 @@ from pymysql.constants.ER import USER_LIMIT_REACHED
 from Api.sanaii_api import add_inbound, add_client_to_inbound, delete_client, get_client, update_client, \
     reset_clients_stat, get_all_inbounds, get_clientByid
 from db_config import db
+from contextlib import contextmanager
 
+@contextmanager
+def open_db_connection():
+    try:
+        if db.is_closed():
+            db.connect()
+        yield
+    finally:
+        if not db.is_closed():
+            db.close()
 
 class BaseModel(Model):
     created_time = DateTimeField(default=datetime.now)
@@ -25,20 +35,17 @@ class BaseModel(Model):
     
     @classmethod
     def safe_select(cls, *args, **kwargs):
-        if db.is_closed():
-            db.connect(reuse_if_open=True)
-        return cls.select(*args, **kwargs)
+        with open_db_connection():
+            return cls.select(*args, **kwargs)
 
     @classmethod
     def safe_get(cls, *args, **kwargs):
-        if db.is_closed():
-            db.connect(reuse_if_open=True)
-        return cls.get(*args, **kwargs)
+        with open_db_connection():
+            return cls.get(*args, **kwargs)
 
     def safe_save(self, *args, **kwargs):
-        if db.is_closed():
-            db.connect(reuse_if_open=True)
-        return self.save(*args, **kwargs)
+        with open_db_connection():
+            return self.save(*args, **kwargs)
 
 
 class ErrorLog(BaseModel):
