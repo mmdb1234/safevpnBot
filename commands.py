@@ -3,7 +3,7 @@ import re
 import segno
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove, MenuButton, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes, ConversationHandler
-import datetime
+from datetime import datetime,timedelta
 import jdatetime
 from button_creator import create_subscription_button, create_servers_button, \
     create_clients_button
@@ -208,12 +208,15 @@ async def handle_vless_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return CHOOSING
 
         api_result = server.get_value_user_server(uuid=uuid)
-
         if api_result:
-            message = calculate_remaining_traffic({"obj": [api_result]})
-            await update.message.reply_text(message)
-        else:
-            await update.message.reply_text("❌ کاربر یافت نشد یا اطلاعات ناقص است.")
+            if isinstance(api_result, dict) and "up" in api_result:
+                message = calculate_remaining_traffic({"obj": [api_result]})
+            elif isinstance(api_result, dict) and "current_usage_GB" in api_result:
+                message = calculate_remaining_traffic_hiddify(api_result)
+            else:
+                message = "❌ ساختار پاسخ ناشناخته است."
+        await update.message.reply_text(message)
+        
 
     except Exception as e:
         await update.message.reply_text(f"❌ خطا در پردازش: {e}")
@@ -250,5 +253,28 @@ def calculate_remaining_traffic(data: dict) -> str:
             ⬇️ دانلود: {bytes_to_gb(client['down'])} GB
             📦 حجم کل: {bytes_to_gb(total)} GB
             💾 حجم باقی‌مانده: {bytes_to_gb(remaining)} GB
-            💾 تاریخ انقضا: {timestamp_to_persian(expiretime)}
+            📆 تاریخ انقضا: {timestamp_to_persian(expiretime)}
         """    
+def calculate_remaining_traffic_hiddify(client: dict) -> str:
+    used = client.get("current_usage_GB", 0)
+    total = client.get("usage_limit_GB", 0)
+    remaining = max(total - used, 0)
+    name = client.get("name", "نامشخص")
+    expire_date = client.get("start_date", "نامشخص")
+    duration_days = client.get("package_days", 0)
+
+    # محاسبه تاریخ انقضا
+    try:
+        start = datetime.strptime(expire_date.strip(), '%Y-%m-%d')
+        expire = start + timedelta(days=duration_days)
+        expire_str = jdatetime.datetime.fromgregorian(datetime=expire)
+    except Exception as e:
+        expire_str = "نامشخص"
+
+    return f"""
+        🧾 نام کاربری: {name}
+        📦 حجم مصرف‌شده: {round(used, 2)} GB
+        📦 حجم کل: {round(total, 2)} GB
+        💾 حجم باقی‌مانده: {round(remaining, 2)} GB
+        📆 تاریخ انقضا: {expire_str.strftime('%Y/%m/%d %H:%M:%S')}
+    """

@@ -13,6 +13,7 @@ from pymysql.constants.ER import USER_LIMIT_REACHED
 
 from Api.sanaii_api import add_inbound, add_client_to_inbound, delete_client, get_client, update_client, \
     reset_clients_stat, get_all_inbounds, get_clientByid
+from Api.hidefy_api import get_user_hidefy
 from db_config import db
 from contextlib import contextmanager
 
@@ -120,16 +121,17 @@ class User(BaseModel):
 
 
 class Server(BaseModel):
-    ACTIVE = 1
-    DISABLE = 2
-    SERVER_STATUS = ((ACTIVE, "ACTIVE"), (DISABLE, "DISABLE"))
+    sanaii = 1
+    HideFy = 2
+    SERVER_STATUS = ((sanaii, "Sanaii"), (HideFy, "HideFy"))
     server_address = CharField(unique=True)
+    domain_name = CharField(null=True)
     server_port = CharField(unique=True)
     server_user = CharField(unique=True)
     server_password = CharField(unique=True)
     server_web_pass = CharField(null=True)
     location = CharField(null=True)
-    status = SmallIntegerField(choices=SERVER_STATUS, default=DISABLE)
+    status = SmallIntegerField(choices=SERVER_STATUS, default=HideFy)
 
     @property
     @ErrorLog.decorate_method_for_error
@@ -152,8 +154,9 @@ class Server(BaseModel):
     @property
     @ErrorLog.decorate_method_for_error
     def url_make(self):
-        return f"https://{self.server_address}:{self.server_port}/{self.server_web_pass}"
-
+        base = self.domain_name if self.domain_name else self.server_address
+        return f"https://{base}:{self.server_port}/{self.server_web_pass}"
+    
     class Meta:
         database = db
         table_name = 'servers'
@@ -169,11 +172,16 @@ class Server(BaseModel):
     
     @ErrorLog.decorate_method_for_error
     def get_value_user_server(self, uuid):
-        api_result = get_clientByid(server=self, uuid=uuid)
-        if api_result.get("success") and api_result.get("obj"):
-            return api_result["obj"][0]
-        else:
-            return None
+        if self.status == 1 :
+            api_result = get_clientByid(server=self, uuid=uuid)
+            if api_result.get("success") and api_result.get("obj"):
+                return api_result["obj"][0]
+            else:
+                return None   
+        elif self.status == 2:
+            api_result = get_user_hidefy(server=self, uuid=uuid)
+            return api_result
+        
 
     
 
